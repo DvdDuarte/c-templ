@@ -1,0 +1,69 @@
+# use the official gcc image, based on debian
+# can use verions as well, like gcc:5.2
+# see https://hub.docker.com/_/gcc/
+image: gcc:10.2.0
+
+stages:
+  - build
+  - test
+  - style
+  - docs
+
+variables:
+  TERM: dumb
+
+compile:
+  stage: build
+  script:
+    - make compile
+  only:
+    - merge_request
+    - main
+    - master
+  cache:
+    paths:
+      - build
+
+test:
+  stage: test
+  script:
+    - make test
+  only:
+    - merge_request
+
+lint:
+  stage: style
+  before_script:
+    - apt update && apt -y install splint
+  script:
+    - make lint
+  only:
+    - merge_request
+
+doxygen:
+  stage: docs
+  before_script:
+    - apt update && apt -y install doxygen
+  script:
+    - make doc
+  only:
+    - merge_request
+  artifacts:
+    paths:
+      - docs/html
+      - docs/latex
+
+pages:
+  stage: docs
+  before_script:
+    - apt update && apt -y install doxygen
+  script:
+    - make documentation
+    - mv docs/html public
+  only:
+    - main
+    - master
+  artifacts:
+    paths:
+      - public/
+
